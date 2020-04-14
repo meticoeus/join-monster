@@ -16,6 +16,21 @@ function arrToConnection(data, sqlAST) {
       recurseOnObjInData(data, astChild)
     }
   }
+  if (sqlAST.typedChildren) {
+    for (let astType in sqlAST.typedChildren) {
+      if (Object.prototype.hasOwnProperty.call(sqlAST.typedChildren, astType)) {
+        for (let astChild of sqlAST.typedChildren[astType] || []) {
+          if (Array.isArray(data)) {
+            for (let dataItem of data) {
+              recurseOnObjInData(dataItem, astChild, astType)
+            }
+          } else if (data) {
+            recurseOnObjInData(data, astChild, astType)
+          }
+        }
+      }
+    }
+  }
   const pageInfo = {
     hasNextPage: false,
     hasPreviousPage: false
@@ -84,7 +99,18 @@ function arrToConnection(data, sqlAST) {
 
 export default arrToConnection
 
-function recurseOnObjInData(dataObj, astChild) {
+function recurseOnObjInData(dataObj, astChild, astType) {
+  if (astType && astChild.type === 'columnDeps') {
+    const names = astChild.names || {}
+    for (let name in names) {
+      if (Object.prototype.hasOwnProperty.call(names, name)) {
+        const dataChild = dataObj[name] || dataObj[name + '@' + astType]
+        if (dataChild !== undefined) {
+          dataObj[name] = dataChild
+        }
+      }
+    }
+  }
   const dataChild = dataObj[astChild.fieldName]
   if (dataChild) {
     dataObj[astChild.fieldName] = arrToConnection(dataObj[astChild.fieldName], astChild)
