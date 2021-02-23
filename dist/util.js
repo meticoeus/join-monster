@@ -134,6 +134,8 @@ function maybeQuote(value, dialectName) {
     return 'NULL';
   }
 
+  if (value === true) return 'TRUE';
+  if (value === false) return 'FALSE';
   if (typeof value === 'number') return value;
   if (value && typeof value.toSQL === 'function') return value.toSQL();
   if (value instanceof Buffer && typeof value === 'object' && typeof value.toString === 'function') {
